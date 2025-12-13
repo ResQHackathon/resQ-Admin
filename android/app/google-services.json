@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "418428525780",
+    "project_id": "resq-mvp",
+    "storage_bucket": "resq-mvp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418428525780:android:8e7f7930c8d5b678ca2f41",
+        "android_client_info": {
+          "package_name": "com.example.resq_admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "418428525780-ns8b7s67pnv9ddgd3meio3uo1b6989o0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvi7UspYGfCJMC2D1LhfEDOBauIKkJNuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "418428525780-ns8b7s67pnv9ddgd3meio3uo1b6989o0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "418428525780-ugbt1h56cmh9smhqfhutsstqmcd3jnlu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.resqMobileApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418428525780:android:791b3558dc823ceeca2f41",
+        "android_client_info": {
+          "package_name": "com.example.resq_mobile_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "418428525780-ns8b7s67pnv9ddgd3meio3uo1b6989o0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvi7UspYGfCJMC2D1LhfEDOBauIKkJNuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "418428525780-ns8b7s67pnv9ddgd3meio3uo1b6989o0.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "418428525780-ugbt1h56cmh9smhqfhutsstqmcd3jnlu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.resqMobileApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

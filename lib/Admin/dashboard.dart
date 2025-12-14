@@ -23,7 +23,6 @@ class DashboardBody extends StatefulWidget {
 
 class _DashboardBodyState extends State<DashboardBody> {
   final MapController _mapController = MapController();
-
   final LatLng center = const LatLng(7.8731, 80.7718); // Sri Lanka
   double zoom = 7;
 
@@ -41,6 +40,9 @@ class _DashboardBodyState extends State<DashboardBody> {
   void _openReport(DocumentSnapshot report) {
     final data = report.data() as Map<String, dynamic>;
 
+    final lat = data['location']?['lat'];
+    final lng = data['location']?['lng'];
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -49,23 +51,30 @@ class _DashboardBodyState extends State<DashboardBody> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Location: ${data['location']}'),
-              Text('Respondent ID: ${data['respondentId']}'),
-              Text('People Affected: ${data['numberOfPeople']}'),
-              Text('Severity: ${data['severity']}'),
-              Text('Status: ${data['status']}'),
+              if (lat != null && lng != null)
+                Text('Location: Lat $lat, Lng $lng'),
+              Text('People Affected: ${data['numberOfPeople'] ?? '-'}'),
+              Text('Severity: ${data['severity'] ?? '-'}'),
+              Text('Status: ${data['status'] ?? '-'}'),
               const SizedBox(height: 8),
               const Text(
-                'Rescue Aid:',
+                'Supply Needs:',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              Text((data['rescueAid'] as List).join(', ')),
+              if (data['supplyNeeds'] != null)
+                Text(
+                  (data['supplyNeeds'] as Map<String, dynamic>)
+                      .entries
+                      .map((e) => '${e.key}: ${e.value}')
+                      .join(', '),
+                ),
               const SizedBox(height: 8),
-              Text(
-                'Reported At: ${DateFormat('dd MMM yyyy, hh:mm a').format(
-                  (data['createdAt'] as Timestamp).toDate(),
-                )}',
-              ),
+              if (data['createdAt'] != null)
+                Text(
+                  'Reported At: ${DateFormat('dd MMM yyyy, hh:mm a').format(
+                    (data['createdAt'] as Timestamp).toDate(),
+                  )}',
+                ),
             ],
           ),
         ),
@@ -103,7 +112,7 @@ class _DashboardBodyState extends State<DashboardBody> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('reports').snapshots(),
+        stream: FirebaseFirestore.instance.collection('incidents').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -117,7 +126,6 @@ class _DashboardBodyState extends State<DashboardBody> {
 
           return Row(
             children: [
-
               // ================= MAP (LEFT) =================
               Expanded(
                 flex: 2,
@@ -137,13 +145,11 @@ class _DashboardBodyState extends State<DashboardBody> {
                         ),
                         MarkerLayer(
                           markers: reports
-                              .where((r) =>
-                                  r['lat'] != null && r['lng'] != null)
+                              .where((r) => r['location'] != null)
                               .map((r) {
-                            final lat =
-                                (r['lat'] as num).toDouble();
-                            final lng =
-                                (r['lng'] as num).toDouble();
+                            final loc = r['location'] as Map<String, dynamic>;
+                            final lat = (loc['lat'] as num).toDouble();
+                            final lng = (loc['lng'] as num).toDouble();
 
                             return Marker(
                               width: 50,
@@ -202,93 +208,114 @@ class _DashboardBodyState extends State<DashboardBody> {
               ),
 
               // ================= TABLE (RIGHT) =================
-              Expanded(
-                flex: 3,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Incident Logs',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+              // ================= TABLE (RIGHT) =================
+Expanded(
+  flex: 2,
+  child: Padding(
+    padding: const EdgeInsets.all(12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Incident Logs',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal, // Allow horizontal scrolling
+              child: DataTable(
+                headingRowColor: WidgetStateProperty.all(
+                    Colors.orange.shade100),
+                columns: const [
+                  DataColumn(label: Text('No')),
+                  DataColumn(label: Text('Location')),
+                  DataColumn(label: Text('Incident Type')),
+                  DataColumn(label: Text('Time')),
+                  DataColumn(label: Text('Status')),
+                ],
+                rows: List.generate(reports.length, (index) {
+                  final r = reports[index];
+                  final data = r.data() as Map<String, dynamic>;
+
+                  final loc = data['location'] as Map<String, dynamic>?;
+
+                  return DataRow(
+                    onSelectChanged: (_) {
+                      if (loc != null) {
+                        _mapController.move(
+                          LatLng(
+                            (loc['lat'] as num).toDouble(),
+                            (loc['lng'] as num).toDouble(),
+                          ),
+                          13,
+                        );
+                      }
+                      _openReport(r);
+                    },
+                    cells: [
+                      DataCell(Text((index + 1).toString())),
+                      DataCell(
+                        SizedBox(
+                          width: 120, // fixed width to avoid overflow
+                          child: Text(
+                            loc != null
+                                ? 'Lat: ${loc['lat']}, Lng: ${loc['lng']}'
+                                : '-',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: DataTable(
-                            headingRowColor:
-                                WidgetStateProperty.all(
-                                    Colors.orange.shade100),
-                            columns: const [
-                              DataColumn(label: Text('No')),
-                              DataColumn(label: Text('Location')),
-                              DataColumn(label: Text('Incident Type')),
-                              DataColumn(label: Text('Time')),
-                              DataColumn(label: Text('Status')),
-                            ],
-                            rows: List.generate(reports.length, (index) {
-                              final r = reports[index];
-                              final data =
-                                  r.data() as Map<String, dynamic>;
-
-                              return DataRow(
-                                onSelectChanged: (_) {
-                                  if (data['lat'] != null &&
-                                      data['lng'] != null) {
-                                    _mapController.move(
-                                      LatLng(
-                                        (data['lat'] as num).toDouble(),
-                                        (data['lng'] as num).toDouble(),
-                                      ),
-                                      13,
-                                    );
-                                  }
-                                  _openReport(r);
-                                },
-                                cells: [
-                                  DataCell(Text((index + 1).toString())),
-                                  DataCell(Text(data['location'] ?? '-')),
-                                  DataCell(Text(data['incidentType'])),
-                                  DataCell(
-                                    Text(
-                                      DateFormat('dd MMM, hh:mm a').format(
-                                        (data['createdAt'] as Timestamp)
-                                            .toDate(),
-                                      ),
-                                    ),
-                                  ),
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            statusColor(data['status']),
-                                        borderRadius:
-                                            BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        data['status'],
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }),
+                      DataCell(
+                        SizedBox(
+                          width: 120, // fixed width
+                          child: Text(
+                            data['incidentType'] ?? '-',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          data['createdAt'] != null
+                              ? DateFormat('dd MMM, hh:mm a')
+                                  .format((data['createdAt'] as Timestamp)
+                                      .toDate())
+                              : '-',
+                        ),
+                      ),
+                      DataCell(
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor(data['status'] ?? ''),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            data['status'] ?? '-',
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ),
+                  );
+                }),
               ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
             ],
           );
         },
